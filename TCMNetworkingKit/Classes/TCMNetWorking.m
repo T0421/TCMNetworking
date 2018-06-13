@@ -8,14 +8,13 @@
 #import "TCMNetWorking.h"
 #import <AFNetworking/AFNetworking.h>
 
-
 NSString *const TCMRequestNologin = @"noLogin";
 NSString *const TCMRequestError = @"error";
 NSString *const TCMRequestFail = @"fail";
 NSString *const TCMRequestModel = @"requestmodel";
 NSString *const TCMRequestInfo = @"info";
 NSString *const TCMRequestFlagSuccess = @"success";
- NSString *const TCMRequestFlag = @"op_flag";
+NSString *const TCMRequestFlag = @"op_flag";
 
 /**淘菜猫开发环境BaseURL*/
 static NSString *const kNetworkServicePlatformDevelopment = @"http://115.159.31.56:80/taocaimall";
@@ -24,8 +23,11 @@ static NSString *const kNetworkServicePlatformTest = @"http://app.taocaimall.com
 /**淘菜猫预发布环境BaseURL*/
 static NSString *const kNetworkServicePlatformPrepare = @"http://uatview.taocaimall.com/taocaimall";
 /**淘菜猫生产环境BaseURL*/
-static NSString *const kNetworkServicePlatformProduction = @"https://m.taocaimall.com/taocaimall";
-
+#ifndef TCM_NETWORK_SERVICE_PLATFORM_PRODUCTION
+    static NSString *const kNetworkServicePlatformProduction = @"https://m.taocaimall.com/taocaimall";
+#else
+    static NSString *const kNetworkServicePlatformProduction = TCM_NETWORK_SERVICE_PLATFORM_PRODUCTION;
+#endif
 /**网络提示语*/
 NSString *const TCMNetworkServiceCrashInfo = @"网络出了点小问题，请重试下哦~";
 /**服务器重启通知*/
@@ -126,7 +128,6 @@ NSInteger const TCMRequestTimeOut_60 = 60;
                 responseObject = caches;
             }
         }
-        [self saveLog:responseObject relativeString:relativeString error:err caches:caches];
 
         handler(responseObject,err);
     }];
@@ -220,32 +221,6 @@ NSInteger const TCMRequestTimeOut_60 = 60;
 #endif
 }
 
-#pragma mark - 数据重定向到本地桌面
-+ (void)saveLog:(id)responseObject relativeString:(NSString *)relativeString error:(NSError *)error caches:(id)caches{
-#if !TCM_NETWORK_SERVICE_PLATFORM_IS_PRODUCTION
-    NSLog(@"服务器返回数据：%@ %@,%@,%@",relativeString,responseObject,error,caches ? @"缓存数据" : @"网络数据");
-
-#if TARGET_IPHONE_SIMULATOR
-    if ([responseObject isKindOfClass:[NSDictionary class]]){
-        NSString *path = NSHomeDirectory();
-        path = [path substringToIndex:[path rangeOfString:@"/Library"].location];
-        path = [NSString stringWithFormat:@"%@/Desktop/Log.data", path];
-
-        NSFileManager *fileManager = [[NSFileManager alloc] init];
-
-        // 判断文件夹是否存在，如果不存在，则创建
-        if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-            [fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
-        } else {
-            NSLog(@"FileDir is exists.");
-        }
-        path = [NSString stringWithFormat:@"%@/%@.plist", path, [relativeString stringByReplacingOccurrencesOfString:@"/" withString:@"_"]];
-        [(NSDictionary *)responseObject writeToFile:path atomically:YES];
-    }
-#endif
-
-#endif
-}
 
 static NSString *kSessionID = nil;
 static NSString *const kSessionIDIdentifier = @"kSessionIDIdentifier";
